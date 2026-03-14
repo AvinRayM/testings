@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Executor</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #0a0e1a; color: white; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .tab-btn { transition: all 0.2s; border-bottom: 3px solid transparent; }
+        .tab-btn.active { border-bottom-color: #6366f1; color: #a5b4fc; }
+        pre { background: #0d1117; padding: 1rem; border-radius: 0.75rem; overflow-x: auto; color: #c9d1d9; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; border: 1px solid #21262d; }
+        .glow { box-shadow: 0 0 30px rgba(99, 102, 241, 0.15); }
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-[#111827] border-b border-[#1f2937] p-4 sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold flex items-center gap-3 text-indigo-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+                Web Executor
+            </h1>
+            <div class="flex items-center gap-2 text-sm">
+                <span class="pulse-dot inline-block w-2 h-2 rounded-full bg-green-400"></span>
+                <span class="text-green-400 font-medium">Server Connected</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="flex-grow max-w-6xl mx-auto w-full p-4 md:p-6 mt-2">
+
+        <!-- Tabs -->
+        <div class="flex border-b border-[#1f2937] mb-6 gap-6">
+            <button class="tab-btn active pb-3 font-medium text-slate-300 cursor-pointer" onclick="switchTab('execute', this)">Execute</button>
+            <button class="tab-btn pb-3 font-medium text-slate-300 cursor-pointer" onclick="switchTab('logs', this)">Logs</button>
+            <button class="tab-btn pb-3 font-medium text-slate-300 cursor-pointer" onclick="switchTab('setup', this)">Roblox Game Setup</button>
+        </div>
+
+        <!-- Status Alert -->
+        <div id="statusAlert" class="hidden mb-6 p-4 rounded-lg text-sm font-medium"></div>
+
+        <!-- ==================== EXECUTE TAB ==================== -->
+        <div id="executeTab" class="tab-content">
+            <div class="bg-[#111827] p-6 rounded-2xl border border-[#1f2937] glow max-w-2xl mx-auto">
+                <h2 class="text-xl font-bold mb-1 text-white">Push Require Script</h2>
+                <p class="text-sm text-slate-500 mb-6">Constructs and queues a safe require() call for your Roblox game server.</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Module ID <span class="text-red-400">*</span></label>
+                        <input type="number" id="moduleId" class="w-full bg-[#0a0e1a] text-white p-3 rounded-lg border border-[#2d3748] focus:outline-none focus:border-indigo-500 transition mono" placeholder="e.g. 15827159924">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Function Name</label>
+                            <input type="text" id="funcName" class="w-full bg-[#0a0e1a] text-white p-3 rounded-lg border border-[#2d3748] focus:outline-none focus:border-indigo-500 transition mono" placeholder="e.g. MauDex">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Target User</label>
+                            <input type="text" id="targetUser" class="w-full bg-[#0a0e1a] text-white p-3 rounded-lg border border-[#2d3748] focus:outline-none focus:border-indigo-500 transition mono" placeholder="e.g. Builderman">
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="mt-2 p-4 bg-[#0d1117] rounded-lg border border-[#21262d]">
+                        <span class="text-xs text-slate-500 block mb-2">PAYLOAD PREVIEW</span>
+                        <code id="previewCode" class="text-green-400 break-all mono text-sm">require(MODULE_ID)</code>
+                    </div>
+
+                    <!-- Push Button -->
+                    <button onclick="pushScript()" id="pushBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl transition mt-2 shadow-lg cursor-pointer flex justify-center items-center gap-2 text-base">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                        Push to Queue
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== LOGS TAB ==================== -->
+        <div id="logsTab" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-white">Execution Logs</h2>
+                <div class="flex gap-2">
+                    <button onclick="clearLogs()" class="bg-red-900/40 hover:bg-red-900/70 border border-red-800 py-2 px-4 rounded-lg text-sm transition cursor-pointer text-red-300 font-medium">Clear All</button>
+                    <button onclick="fetchLogs()" class="bg-[#111827] hover:bg-[#1f2937] border border-[#2d3748] py-2 px-4 rounded-lg text-sm transition cursor-pointer text-slate-300 font-medium">Refresh</button>
+                </div>
+            </div>
+
+            <div class="bg-[#111827] rounded-2xl border border-[#1f2937] overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-[#0a0e1a] text-slate-500 text-xs uppercase tracking-wider">
+                            <th class="p-3 border-b border-[#1f2937]">ID</th>
+                            <th class="p-3 border-b border-[#1f2937]">Payload</th>
+                            <th class="p-3 border-b border-[#1f2937]">User</th>
+                            <th class="p-3 border-b border-[#1f2937]">Status</th>
+                            <th class="p-3 border-b border-[#1f2937]">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody" class="text-sm divide-y divide-[#1f2937]">
+                        <tr><td colspan="5" class="p-6 text-center text-slate-600">No logs yet. Push a script first!</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Auto Refresh -->
+            <div class="mt-4 flex items-center gap-2 text-sm text-slate-500">
+                <input type="checkbox" id="autoRefresh" checked class="accent-indigo-500">
+                <label for="autoRefresh">Auto-refresh every 3 seconds</label>
+            </div>
+        </div>
+
+        <!-- ==================== SETUP TAB ==================== -->
+        <div id="setupTab" class="tab-content hidden">
+
+            <!-- Steps -->
+            <div class="bg-[#111827] p-6 rounded-2xl border border-[#1f2937] mb-6">
+                <h2 class="text-xl font-bold mb-4 text-indigo-400">Quick Start Guide</h2>
+                <div class="space-y-4 text-sm text-slate-300">
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">1</span>
+                        <div>Open your terminal in the <code class="bg-[#0d1117] px-2 py-0.5 rounded text-indigo-300 mono text-xs">backend/</code> folder and run:
+                            <pre class="mt-2">npm init -y
+npm install express
+node server.js</pre>
+                            <p class="text-slate-500 mt-1">Then open <code class="bg-[#0d1117] px-2 py-0.5 rounded text-green-300 mono text-xs">http://localhost:3000</code> in your browser. That's this page!</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">2</span>
+                        <div>In Roblox Studio, click on <strong>ServerScriptService</strong> in the Explorer, then in the <strong>Properties</strong> panel, check <strong>LoadStringEnabled = true</strong>.</div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">3</span>
+                        <div>In Roblox Studio, go to <strong>Game Settings > Security</strong> and enable <strong>Allow HTTP Requests</strong>.</div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">4</span>
+                        <div>Create a <strong>Script</strong> inside ServerScriptService and paste the Server Script below.</div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">5</span>
+                        <div>Create a <strong>LocalScript</strong> inside StarterPlayerScripts (or a GUI) and paste the LocalScript below.</div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">6</span>
+                        <div>Play your game. The server will poll this web panel every 5 seconds. Push a module from the <strong>Execute</strong> tab and watch it run!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Note -->
+            <div class="mb-6 p-4 bg-amber-900/30 border border-amber-700 rounded-xl text-sm text-amber-200">
+                <strong>Important:</strong> Replace <code class="bg-[#0d1117] px-2 py-0.5 rounded mono text-xs">YOUR_URL_HERE</code> in the Roblox scripts with your actual hosted backend URL (e.g., <code class="bg-[#0d1117] px-2 py-0.5 rounded mono text-xs">https://your-app.glitch.me</code>). If testing locally, Roblox Studio cannot reach <code class="mono text-xs">localhost</code> — you must use a tunnel like <strong>ngrok</strong> or host it online.
+            </div>
+
+            <!-- Server Script -->
+            <div class="bg-[#111827] p-6 rounded-2xl border border-[#1f2937] mb-6">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-bold text-white">ServerScript <span class="text-xs text-slate-500 font-normal ml-2">→ ServerScriptService</span></h3>
+                    <button onclick="copyCode('serverCode')" class="text-xs bg-[#0d1117] hover:bg-[#1f2937] border border-[#2d3748] px-3 py-1.5 rounded-lg cursor-pointer text-slate-400 transition">Copy</button>
+                </div>
+<pre id="serverCode">-- ============================================
+-- SERVER SCRIPT (ServerScriptService)
+-- Polls the web panel + listens to RemoteEvent
+-- ============================================
+
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- CHANGE THIS to your hosted backend URL
+local API_URL = "YOUR_URL_HERE"
+
+-- Create RemoteEvent for LocalScript communication
+local execRemote = Instance.new("RemoteEvent")
+execRemote.Name = "ExecuteRemote"
+execRemote.Parent = ReplicatedStorage
+
+-- Admin whitelist (add your UserId here)
+local ADMINS = {
+    [123456789] = true,  -- Replace with your actual UserId
+}
+
+local function executeCode(codeStr)
+    local func, compileErr = loadstring(codeStr)
+    if not func then
+        return false, "Compile Error: " .. tostring(compileErr)
+    end
+    local success, runErr = pcall(func)
+    if not success then
+        return false, "Runtime Error: " .. tostring(runErr)
+    end
+    return true, "Success"
+end
+
+-- Listen for in-game RemoteEvent from LocalScript
+execRemote.OnServerEvent:Connect(function(player, codeStr)
+    if not ADMINS[player.UserId] then
+        warn("Blocked execution from non-admin: " .. player.Name)
+        return
+    end
+    print("[Executor] Running code from " .. player.Name)
+    local ok, result = executeCode(codeStr)
+    if not ok then warn("[Executor] " .. result) end
+end)
+
+-- Poll the web backend every 5 seconds
+print("[Web Executor] Server started, polling " .. API_URL)
+task.spawn(function()
+    while task.wait(5) do
+        local ok, res = pcall(function()
+            return HttpService:GetAsync(API_URL .. "/api/poll")
+        end)
+
+        if ok and res then
+            local data = HttpService:JSONDecode(res)
+
+            if data and data.jobId and data.script then
+                print("[Web Executor] Got job #" .. data.jobId .. ": " .. data.script)
+
+                local execOk, execMsg = executeCode(data.script)
+
+                pcall(function()
+                    HttpService:PostAsync(
+                        API_URL .. "/api/result",
+                        HttpService:JSONEncode({
+                            jobId = data.jobId,
+                            status = execOk and "Completed" or "Error",
+                            error = execMsg
+                        }),
+                        Enum.HttpContentType.ApplicationJson,
+                        false
+                    )
+                end)
+            end
+        end
+    end
+end)</pre>
+            </div>
+
+            <!-- LocalScript -->
+            <div class="bg-[#111827] p-6 rounded-2xl border border-[#1f2937]">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-bold text-white">LocalScript <span class="text-xs text-slate-500 font-normal ml-2">→ StarterPlayerScripts or inside a GUI</span></h3>
+                    <button onclick="copyCode('localCode')" class="text-xs bg-[#0d1117] hover:bg-[#1f2937] border border-[#2d3748] px-3 py-1.5 rounded-lg cursor-pointer text-slate-400 transition">Copy</button>
+                </div>
+<pre id="localCode">-- ============================================
+-- LOCAL SCRIPT (StarterPlayerScripts or GUI)
+-- Fires the RemoteEvent so the Server runs it
+-- ============================================
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local execRemote = ReplicatedStorage:WaitForChild("ExecuteRemote")
+
+-- Example: fire a require script to the server
+local function runRequire(moduleId, funcName, targetUser)
+    local code = "require(" .. tostring(moduleId) .. ")"
+    if funcName then
+        code = code .. "." .. funcName .. "("
+        if targetUser then
+            code = code .. '"' .. targetUser .. '"'
+        end
+        code = code .. ")"
+    end
+    execRemote:FireServer(code)
+    print("Sent to server: " .. code)
+end
+
+-- Example usage (runs when the player joins):
+runRequire(15827159924, "MauDex", "Builderman")
+
+-- You can also connect this to a TextButton:
+-- script.Parent.MouseButton1Click:Connect(function()
+--     runRequire(15827159924, "MauDex", "SomeUser")
+-- end)</pre>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-slate-600 text-xs p-4 border-t border-[#1f2937]">
+        Web Executor Suite &mdash; For educational and development use only.
+    </footer>
+
+    <script>
+        // ============ TAB SWITCHING ============
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId + 'Tab').classList.remove('hidden');
+            btn.classList.add('active');
+            if (tabId === 'logs') fetchLogs();
+        }
+
+        // ============ PREVIEW ============
+        ['moduleId', 'funcName', 'targetUser'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updatePreview);
+        });
+
+        function updatePreview() {
+            const mod = document.getElementById('moduleId').value || 'MODULE_ID';
+            const func = document.getElementById('funcName').value;
+            const target = document.getElementById('targetUser').value;
+            let preview = `require(${mod})`;
+            if (func) {
+                preview += `.${func}(`;
+                if (target) preview += `"${target.replace(/"/g, '')}"`;
+                preview += `)`;
+            }
+            document.getElementById('previewCode').textContent = preview;
+        }
+
+        // ============ ALERTS ============
+        function showAlert(msg, isError = true) {
+            const el = document.getElementById('statusAlert');
+            el.textContent = msg;
+            el.className = `mb-6 p-4 rounded-lg text-sm font-medium ${isError ? 'bg-red-900/50 border border-red-500 text-red-200' : 'bg-green-900/50 border border-green-500 text-green-200'}`;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+
+        // ============ PUSH SCRIPT ============
+        async function pushScript() {
+            const mod = document.getElementById('moduleId').value;
+            const func = document.getElementById('funcName').value;
+            const target = document.getElementById('targetUser').value;
+
+            if (!mod) { showAlert("Module ID is required!"); return; }
+
+            const btn = document.getElementById('pushBtn');
+            const original = btn.innerHTML;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Pushing...`;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ moduleId: mod, functionName: func, targetUser: target })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Push failed');
+                showAlert(`Job #${data.job.id} queued successfully! Payload: ${data.job.script}`, false);
+            } catch (err) {
+                showAlert(`Error: ${err.message}`);
+            } finally {
+                btn.innerHTML = original;
+                btn.disabled = false;
+            }
+        }
+
+        // ============ FETCH LOGS ============
+        async function fetchLogs() {
+            const tbody = document.getElementById('logsTableBody');
+            try {
+                const res = await fetch('/api/logs');
+                const { jobs } = await res.json();
+
+                if (!jobs || jobs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-600">No logs yet. Push a script first!</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = jobs.map(job => {
+                    const colors = {
+                        Pending: 'text-yellow-400 bg-yellow-900/20',
+                        Executing: 'text-blue-400 bg-blue-900/20',
+                        Completed: 'text-green-400 bg-green-900/20',
+                        Error: 'text-red-400 bg-red-900/20'
+                    };
+                    const c = colors[job.status] || 'text-slate-400';
+                    const time = new Date(job.createdAt).toLocaleTimeString();
+
+                    return `
+                        <tr class="hover:bg-[#1a2332] transition">
+                            <td class="p-3 text-slate-400">#${job.id}</td>
+                            <td class="p-3 mono text-xs text-indigo-300 break-all">${job.script}</td>
+                            <td class="p-3 text-slate-300">${job.targetUser}</td>
+                            <td class="p-3"><span class="px-2 py-1 rounded-full text-xs font-semibold ${c}">${job.status}</span>${job.error && job.status === 'Error' ? `<br><span class="text-xs text-red-500 mt-1 block">${job.error}</span>` : ''}</td>
+                            <td class="p-3 text-slate-500 text-xs">${time}</td>
+                        </tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400">Could not load logs. Is the server running?</td></tr>`;
+            }
+        }
+
+        // ============ CLEAR LOGS ============
+        async function clearLogs() {
+            try {
+                await fetch('/api/logs', { method: 'DELETE' });
+                fetchLogs();
+                showAlert('All logs cleared.', false);
+            } catch (err) {
+                showAlert('Failed to clear logs.');
+            }
+        }
+
+        // ============ COPY CODE ============
+        function copyCode(id) {
+            const text = document.getElementById(id).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('Copied to clipboard!', false);
+            });
+        }
+
+        // ============ AUTO REFRESH LOGS ============
+        setInterval(() => {
+            const autoBox = document.getElementById('autoRefresh');
+            const logsVisible = !document.getElementById('logsTab').classList.contains('hidden');
+            if (autoBox && autoBox.checked && logsVisible) fetchLogs();
+        }, 3000);
+
+        updatePreview();
+    </script>
+</body>
+</html>
