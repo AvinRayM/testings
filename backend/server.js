@@ -12,6 +12,11 @@ app.use(express.static(path.join(__dirname, '..')));
 const jobs = [];
 let jobIdCounter = 1;
 
+// Health check (Render uses this to know the server is alive)
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime(), jobs: jobs.length });
+});
+
 // Push a require script to the queue
 app.post('/api/execute', (req, res) => {
     const { targetUser, moduleId, functionName } = req.body;
@@ -81,6 +86,7 @@ app.delete('/api/logs', (req, res) => {
 app.listen(PORT, () => {
     console.log(`--------------------------------------------`);
     console.log(`  Web Executor Backend is LIVE`);
-    console.log(`  Open in browser: http://localhost:${PORT}`);
+    console.log(`  Port: ${PORT}`);
+    console.log(`  Local: http://localhost:${PORT}`);
     console.log(`--------------------------------------------`);
 });
