@@ -15,6 +15,7 @@
         .glow { box-shadow: 0 0 30px rgba(99, 102, 241, 0.15); }
         .pulse-dot { animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .step-card { background: #111827; border: 1px solid #1f2937; border-radius: 1rem; padding: 1.5rem; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -27,8 +28,8 @@
                 Web Executor
             </h1>
             <div class="flex items-center gap-2 text-sm">
-                <span class="pulse-dot inline-block w-2 h-2 rounded-full bg-green-400"></span>
-                <span class="text-green-400 font-medium">Server Connected</span>
+                <span class="pulse-dot inline-block w-2 h-2 rounded-full bg-green-400" id="statusDot"></span>
+                <span class="text-green-400 font-medium" id="statusText">Checking...</span>
             </div>
         </div>
     </header>
@@ -37,10 +38,11 @@
     <main class="flex-grow max-w-6xl mx-auto w-full p-4 md:p-6 mt-2">
 
         <!-- Tabs -->
-        <div class="flex border-b border-[#1f2937] mb-6 gap-6">
+        <div class="flex border-b border-[#1f2937] mb-6 gap-6 flex-wrap">
             <button class="tab-btn active pb-3 font-medium text-slate-300 cursor-pointer" onclick="switchTab('execute', this)">Execute</button>
             <button class="tab-btn pb-3 font-medium text-slate-300 cursor-pointer" onclick="switchTab('logs', this)">Logs</button>
-            <button class="tab-btn pb-3 font-medium text-slate-300 cursor-pointer" onclick="switchTab('setup', this)">Roblox Game Setup</button>
+            <button class="tab-btn pb-3 font-medium text-slate-300 cursor-pointer" onclick="switchTab('roblox', this)">Roblox Game Setup</button>
+            <button class="tab-btn pb-3 font-medium text-slate-300 cursor-pointer" onclick="switchTab('render', this)">Deploy to Render</button>
         </div>
 
         <!-- Status Alert -->
@@ -111,61 +113,47 @@
                 </table>
             </div>
 
-            <!-- Auto Refresh -->
             <div class="mt-4 flex items-center gap-2 text-sm text-slate-500">
                 <input type="checkbox" id="autoRefresh" checked class="accent-indigo-500">
                 <label for="autoRefresh">Auto-refresh every 3 seconds</label>
             </div>
         </div>
 
-        <!-- ==================== SETUP TAB ==================== -->
-        <div id="setupTab" class="tab-content hidden">
+        <!-- ==================== ROBLOX GAME SETUP TAB ==================== -->
+        <div id="robloxTab" class="tab-content hidden">
 
-            <!-- Steps -->
-            <div class="bg-[#111827] p-6 rounded-2xl border border-[#1f2937] mb-6">
-                <h2 class="text-xl font-bold mb-4 text-indigo-400">Quick Start Guide</h2>
-                <div class="space-y-4 text-sm text-slate-300">
+            <div class="bg-amber-900/30 border border-amber-700 rounded-xl p-4 mb-6 text-sm text-amber-200">
+                <strong>Your API URL is your Render URL!</strong> After deploying to Render (see the <strong>"Deploy to Render"</strong> tab), you'll get a URL like:
+                <code class="bg-[#0d1117] px-2 py-1 rounded mono text-xs text-green-300 ml-1">https://your-app-name.onrender.com</code>
+                <br>Paste that URL into the Roblox ServerScript below where it says <code class="mono text-xs">YOUR_RENDER_URL</code>.
+            </div>
+
+            <div class="step-card mb-6">
+                <h2 class="text-lg font-bold mb-4 text-indigo-400">Before You Start</h2>
+                <div class="space-y-3 text-sm text-slate-300">
                     <div class="flex gap-3 items-start">
                         <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">1</span>
-                        <div>Open your terminal in the <code class="bg-[#0d1117] px-2 py-0.5 rounded text-indigo-300 mono text-xs">backend/</code> folder and run:
-                            <pre class="mt-2">npm init -y
-npm install express
-node server.js</pre>
-                            <p class="text-slate-500 mt-1">Then open <code class="bg-[#0d1117] px-2 py-0.5 rounded text-green-300 mono text-xs">http://localhost:3000</code> in your browser. That's this page!</p>
-                        </div>
+                        <div>In Roblox Studio, click <strong>ServerScriptService</strong> in the Explorer. In the Properties panel, set <strong>LoadStringEnabled = true</strong>.</div>
                     </div>
                     <div class="flex gap-3 items-start">
                         <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">2</span>
-                        <div>In Roblox Studio, click on <strong>ServerScriptService</strong> in the Explorer, then in the <strong>Properties</strong> panel, check <strong>LoadStringEnabled = true</strong>.</div>
+                        <div>Go to <strong>Game Settings > Security</strong> and enable <strong>Allow HTTP Requests</strong>.</div>
                     </div>
                     <div class="flex gap-3 items-start">
                         <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">3</span>
-                        <div>In Roblox Studio, go to <strong>Game Settings > Security</strong> and enable <strong>Allow HTTP Requests</strong>.</div>
+                        <div>Create a <strong>Script</strong> in ServerScriptService, paste the ServerScript below.</div>
                     </div>
                     <div class="flex gap-3 items-start">
                         <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">4</span>
-                        <div>Create a <strong>Script</strong> inside ServerScriptService and paste the Server Script below.</div>
-                    </div>
-                    <div class="flex gap-3 items-start">
-                        <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">5</span>
-                        <div>Create a <strong>LocalScript</strong> inside StarterPlayerScripts (or a GUI) and paste the LocalScript below.</div>
-                    </div>
-                    <div class="flex gap-3 items-start">
-                        <span class="bg-indigo-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">6</span>
-                        <div>Play your game. The server will poll this web panel every 5 seconds. Push a module from the <strong>Execute</strong> tab and watch it run!</div>
+                        <div>Create a <strong>LocalScript</strong> in StarterPlayerScripts (or inside a GUI TextButton). Paste the LocalScript below.</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Important Note -->
-            <div class="mb-6 p-4 bg-amber-900/30 border border-amber-700 rounded-xl text-sm text-amber-200">
-                <strong>Important:</strong> Replace <code class="bg-[#0d1117] px-2 py-0.5 rounded mono text-xs">YOUR_URL_HERE</code> in the Roblox scripts with your actual hosted backend URL (e.g., <code class="bg-[#0d1117] px-2 py-0.5 rounded mono text-xs">https://your-app.glitch.me</code>). If testing locally, Roblox Studio cannot reach <code class="mono text-xs">localhost</code> — you must use a tunnel like <strong>ngrok</strong> or host it online.
-            </div>
-
             <!-- Server Script -->
-            <div class="bg-[#111827] p-6 rounded-2xl border border-[#1f2937] mb-6">
+            <div class="step-card mb-6">
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-lg font-bold text-white">ServerScript <span class="text-xs text-slate-500 font-normal ml-2">→ ServerScriptService</span></h3>
+                    <h3 class="text-lg font-bold text-white">ServerScript <span class="text-xs text-slate-500 font-normal ml-2">-> ServerScriptService</span></h3>
                     <button onclick="copyCode('serverCode')" class="text-xs bg-[#0d1117] hover:bg-[#1f2937] border border-[#2d3748] px-3 py-1.5 rounded-lg cursor-pointer text-slate-400 transition">Copy</button>
                 </div>
 <pre id="serverCode">-- ============================================
@@ -176,17 +164,20 @@ node server.js</pre>
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- CHANGE THIS to your hosted backend URL
-local API_URL = "YOUR_URL_HERE"
+----------------------------------------------
+-- CHANGE THIS to your Render URL!
+-- Example: "https://my-executor.onrender.com"
+----------------------------------------------
+local API_URL = "YOUR_RENDER_URL"
 
 -- Create RemoteEvent for LocalScript communication
 local execRemote = Instance.new("RemoteEvent")
 execRemote.Name = "ExecuteRemote"
 execRemote.Parent = ReplicatedStorage
 
--- Admin whitelist (add your UserId here)
+-- Admin whitelist (add your UserId)
 local ADMINS = {
-    [123456789] = true,  -- Replace with your actual UserId
+    [123456789] = true,  -- Replace with YOUR UserId
 }
 
 local function executeCode(codeStr)
@@ -247,9 +238,9 @@ end)</pre>
             </div>
 
             <!-- LocalScript -->
-            <div class="bg-[#111827] p-6 rounded-2xl border border-[#1f2937]">
+            <div class="step-card">
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-lg font-bold text-white">LocalScript <span class="text-xs text-slate-500 font-normal ml-2">→ StarterPlayerScripts or inside a GUI</span></h3>
+                    <h3 class="text-lg font-bold text-white">LocalScript <span class="text-xs text-slate-500 font-normal ml-2">-> StarterPlayerScripts or inside a GUI</span></h3>
                     <button onclick="copyCode('localCode')" class="text-xs bg-[#0d1117] hover:bg-[#1f2937] border border-[#2d3748] px-3 py-1.5 rounded-lg cursor-pointer text-slate-400 transition">Copy</button>
                 </div>
 <pre id="localCode">-- ============================================
@@ -284,6 +275,111 @@ runRequire(15827159924, "MauDex", "Builderman")
             </div>
         </div>
 
+        <!-- ==================== DEPLOY TO RENDER TAB ==================== -->
+        <div id="renderTab" class="tab-content hidden">
+
+            <div class="step-card mb-6">
+                <h2 class="text-xl font-bold mb-2 text-indigo-400">Deploy to Render (Free)</h2>
+                <p class="text-sm text-slate-400 mb-6">Render gives you a public URL like <code class="mono text-green-300 text-xs bg-[#0d1117] px-2 py-0.5 rounded">https://your-app-name.onrender.com</code>. That URL is what you use as your API URL in the Roblox script AND in your browser to open the web panel.</p>
+
+                <div class="space-y-6 text-sm text-slate-300">
+
+                    <!-- Step 1 -->
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-green-600 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5">1</span>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-white mb-2">Push your code to GitHub</h3>
+                            <p class="text-slate-400 mb-2">Your repo needs this file structure:</p>
+<pre>your-repo/
+  backend/
+    server.js       &lt;-- the Node server
+    package.json    &lt;-- already created for you
+  index.html        &lt;-- the web panel</pre>
+                            <p class="text-slate-400 mt-2">Create a GitHub repo and push these files:</p>
+<pre>cd your-project-folder
+git init
+git add .
+git commit -m "initial commit"
+git branch -M main
+git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+git push -u origin main</pre>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-green-600 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5">2</span>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-white mb-2">Create a Render account</h3>
+                            <p class="text-slate-400">Go to <a href="https://render.com" target="_blank" class="text-indigo-400 underline">https://render.com</a> and sign up with your GitHub account (free).</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-green-600 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5">3</span>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-white mb-2">Create a New Web Service</h3>
+                            <p class="text-slate-400 mb-2">On Render dashboard, click <strong>"New +"</strong> > <strong>"Web Service"</strong>. Connect your GitHub repo.</p>
+                            <p class="text-slate-400 mb-2">Fill in these settings:</p>
+                            <div class="bg-[#0d1117] rounded-lg border border-[#21262d] overflow-hidden mt-2">
+                                <table class="w-full text-sm">
+                                    <tbody class="divide-y divide-[#21262d]">
+                                        <tr><td class="p-3 text-slate-500 font-medium">Name</td><td class="p-3 mono text-green-300">my-web-executor</td></tr>
+                                        <tr><td class="p-3 text-slate-500 font-medium">Region</td><td class="p-3 text-slate-300">Pick the closest to you</td></tr>
+                                        <tr><td class="p-3 text-slate-500 font-medium">Branch</td><td class="p-3 mono text-green-300">main</td></tr>
+                                        <tr><td class="p-3 text-slate-500 font-medium">Root Directory</td><td class="p-3 mono text-yellow-300 font-bold">backend</td></tr>
+                                        <tr><td class="p-3 text-slate-500 font-medium">Runtime</td><td class="p-3 text-slate-300">Node</td></tr>
+                                        <tr><td class="p-3 text-slate-500 font-medium">Build Command</td><td class="p-3 mono text-green-300">npm install</td></tr>
+                                        <tr><td class="p-3 text-slate-500 font-medium">Start Command</td><td class="p-3 mono text-green-300">node server.js</td></tr>
+                                        <tr><td class="p-3 text-slate-500 font-medium">Plan</td><td class="p-3 text-slate-300">Free</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-green-600 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5">4</span>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-white mb-2">Click "Create Web Service"</h3>
+                            <p class="text-slate-400">Render will build and deploy your app. Wait ~2 minutes. When it says <strong>"Live"</strong>, you're good!</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-green-600 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5">5</span>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-white mb-2">Get your URL</h3>
+                            <p class="text-slate-400 mb-2">Render gives you a URL at the top of the page. It looks like:</p>
+<pre>https://my-web-executor.onrender.com</pre>
+                            <p class="text-slate-400 mt-2"><strong>This is your API URL!</strong> Use it for everything:</p>
+                            <ul class="list-disc ml-5 mt-1 space-y-1 text-slate-400">
+                                <li>Open it in your browser = the Web Executor panel</li>
+                                <li>Paste it into the Roblox ServerScript where it says <code class="mono text-xs text-yellow-300">YOUR_RENDER_URL</code></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Step 6 -->
+                    <div class="flex gap-3 items-start">
+                        <span class="bg-green-600 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5">6</span>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-white mb-2">Done! Test it</h3>
+                            <p class="text-slate-400 mb-2">Open your Render URL in the browser. Go to the <strong>Execute</strong> tab, push a module. Then play your Roblox game — the server script will pick it up in ~5 seconds!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning about free tier -->
+            <div class="bg-amber-900/30 border border-amber-700 rounded-xl p-4 text-sm text-amber-200">
+                <strong>Render Free Tier Note:</strong> Free services spin down after 15 minutes of no traffic. The first request after it sleeps takes ~30 seconds to wake up. Your Roblox game constantly polling <code class="mono text-xs">/api/poll</code> will keep it awake while the game is running. If you want it always on, upgrade to the $7/month plan.
+            </div>
+        </div>
+
     </main>
 
     <!-- Footer -->
@@ -300,6 +396,26 @@ runRequire(15827159924, "MauDex", "Builderman")
             btn.classList.add('active');
             if (tabId === 'logs') fetchLogs();
         }
+
+        // ============ SERVER STATUS CHECK ============
+        async function checkServer() {
+            try {
+                const res = await fetch('/api/health');
+                if (res.ok) {
+                    document.getElementById('statusDot').className = 'pulse-dot inline-block w-2 h-2 rounded-full bg-green-400';
+                    document.getElementById('statusText').textContent = 'Server Connected';
+                    document.getElementById('statusText').className = 'text-green-400 font-medium';
+                } else {
+                    throw new Error();
+                }
+            } catch {
+                document.getElementById('statusDot').className = 'pulse-dot inline-block w-2 h-2 rounded-full bg-red-400';
+                document.getElementById('statusText').textContent = 'Server Offline';
+                document.getElementById('statusText').className = 'text-red-400 font-medium';
+            }
+        }
+        checkServer();
+        setInterval(checkServer, 10000);
 
         // ============ PREVIEW ============
         ['moduleId', 'funcName', 'targetUser'].forEach(id => {
